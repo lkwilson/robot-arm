@@ -86,3 +86,12 @@ def up_arm(state: RobotState, arm_point: ArmPoint):
   # note: inverse of rotation/unitary matrix is just transpose
   new_point = rot.T @ rot_z(theta).T @ point - tran
   return ArmPoint(n, new_point)
+
+def to_arm(state: RobotState, arm_point: ArmPoint, arm_number: int):
+  ''' arm_number is 0 for robot 1 for first arm. return value will match arm_point.index '''
+  point = arm_point
+  while point.index < arm_number:
+    point = down_arm(state, point)
+  while point.index > arm_number:
+    point = up_arm(state, point)
+  return point

@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from robot_arm.transforms import RobotState, ArmPoint, rot_x, rot_y, rot_z, down_arm, up_arm
+from robot_arm.transforms import RobotState, ArmPoint, rot_x, rot_y, rot_z, down_arm, up_arm, to_arm
 from scipy.spatial.transform import Rotation
 
 logger = logging.getLogger(__name__)
@@ -86,3 +86,22 @@ def test_traverse_arm():
     point = up_arm(state, point)
   assert init_point.index == point.index
   assert np.all(np.isclose(point.point, init_point.point))
+
+def test_high_traverse_arm():
+  state = get_state()
+  state.thetas = np.array([1, 2, 3, 4, 5, 6])
+  init_point = ArmPoint(0, np.zeros(3))
+  point = init_point
+  for i in range(6):
+    point = down_arm(state, point)
+  quick_point = to_arm(state, point, 6)
+  logger.info('%s from %s', quick_point, point)
+  assert np.all(np.isclose(quick_point.point, point.point))
+  quick_point = to_arm(state, init_point, 6)
+  assert np.all(np.isclose(quick_point.point, point.point))
+
+  back_point = to_arm(state, point, 2)
+  back_point = to_arm(state, point, 5)
+  back_point = to_arm(state, point, 6)
+  back_point = to_arm(state, point, 0)
+  assert np.all(np.isclose(back_point.point, init_point.point))
