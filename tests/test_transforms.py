@@ -19,12 +19,12 @@ class ArmPoint:
 def get_state():
   return RobotState(
     arm_rots = [
-      rot_x(np.pi / 4),
-      rot_y(np.pi / 4),
-      rot_z(np.pi / 4),
-      rot_z(np.pi / 4),
-      rot_y(np.pi / 4),
-      rot_x(np.pi / 4),
+      rot_x(np.pi / 2),
+      rot_y(np.pi / 2),
+      rot_z(np.pi / 2),
+      rot_z(np.pi / 2),
+      rot_y(np.pi / 2),
+      rot_x(np.pi / 2),
     ],
     arm_trans = [
       np.array([0, 0, 10]) for _ in range(6)
@@ -33,7 +33,7 @@ def get_state():
   )
 
 def rot_check(rot, x, exp):
-  res =rot @ x
+  res = rot @ x
   logger.info(res)
   assert np.all(np.isclose(res, exp))
 
@@ -68,13 +68,21 @@ def test_traverse_arm():
     point = down_arm(state, point)
     assert point.index == last_point.index + 1
     logger.info('%s -> %s', last_point, point)
+  end_point = point
   assert point.index == 6
-  #assert np.all(np.isclose(point.point, []))
-
   for i in range(6):
     last_point = point
     point = up_arm(state, point)
     assert point.index == last_point.index - 1
     logger.info('%s -> %s', last_point, point)
+  assert init_point.index == point.index
+  assert np.all(np.isclose(point.point, init_point.point))
+
+  state.thetas = np.array([1, 2, 3, 4, 5, 6])
+  for i in range(6):
+    point = down_arm(state, point)
+  assert not np.all(np.isclose(end_point.point, point.point))
+  for i in range(6):
+    point = up_arm(state, point)
   assert init_point.index == point.index
   assert np.all(np.isclose(point.point, init_point.point))
