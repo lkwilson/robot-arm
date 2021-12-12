@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+bin_dir="$(dirname "$(realpath "$BASH_SOURCE")")"
+src_dir="$(realpath "$bin_dir/../src")"
+export PYTHONPATH="$src_dir:$PYTHONPATH"
+
+python -m robot_arm "$@"
