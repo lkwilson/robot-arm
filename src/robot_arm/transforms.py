@@ -21,8 +21,8 @@ def build_rot_z(theta: float):
     [0, 0, 1],
   ])
 
-def down_arm(point, rot, rot_z, tran):
-  return rot_z @ rot @ (point + tran)
+def down_arm(points, rot, rot_z, tran):
+  return rot_z @ rot @ (points.T + tran)
 
-def up_arm(point, rot, rot_z, tran):
-  return rot.T @ rot_z.T @ point - tran
+def up_arm(points, rot, rot_z, tran):
+  return rot.T @ rot_z.T @ points.T - tran

@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+from robot_arm import transforms
 from robot_arm.transforms import build_rot_x, build_rot_y, build_rot_z
 from robot_arm.state import RobotState, ArmPoint, down_arm, up_arm, to_arm
 from scipy.spatial.transform import Rotation
@@ -106,3 +107,13 @@ def test_high_traverse_arm():
   back_point = to_arm(state, point, 6)
   back_point = to_arm(state, point, 0)
   assert np.all(np.isclose(back_point.point, init_point.point))
+
+def test_multi_dim_trans():
+  pts = np.array([
+    [1, 2, 3],
+    [3, 4, 5],
+    [1, 2, 8],
+    [1, 2, 8],
+  ])
+  res = transforms.up_arm(pts, transforms.build_rot_x(23), transforms.build_rot_z(23), [1, 2, 3])
+  print(res)
