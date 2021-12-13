@@ -115,5 +115,26 @@ def test_multi_dim_trans():
     [1, 2, 8],
     [1, 2, 8],
   ])
-  res = transforms.up_arm(pts, transforms.build_rot_x(23), transforms.build_rot_z(23), [1, 2, 3])
-  print(res)
+  down_target_pts = np.array([
+    [1, 2, 13],
+    [3, 4, 15],
+    [1, 2, 18],
+    [1, 2, 18],
+  ])
+  logger.info("pre: %s", pts)
+  down_res = transforms.down_arm_multi_pt(pts, transforms.build_rot_x(0), transforms.build_rot_z(0), np.array([0, 0, 10]))
+  logger.info("down: %s", down_res)
+  assert np.all(np.isclose(down_res, down_target_pts))
+  up_res = transforms.up_arm_multi_pt(down_res, transforms.build_rot_x(0), transforms.build_rot_z(0), np.array([0, 0, 10]))
+  logger.info("up: %s", up_res)
+  assert np.all(np.isclose(up_res, pts))
+
+def test_single_dim_trans():
+  pts = np.array([1, 2, 3])
+  logger.info("pre: %s", pts)
+  down_res = transforms.down_arm_single_pt(pts, transforms.build_rot_x(0), transforms.build_rot_z(0), np.array([0, 0, 10]))
+  logger.info("down: %s", down_res)
+  assert np.all(np.isclose(down_res, [1, 2, 13]))
+  up_res = transforms.up_arm_single_pt(down_res, transforms.build_rot_x(0), transforms.build_rot_z(0), np.array([0, 0, 10]))
+  logger.info("up: %s", up_res)
+  assert np.all(np.isclose(up_res, pts))
