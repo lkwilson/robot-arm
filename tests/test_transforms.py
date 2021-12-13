@@ -1,6 +1,7 @@
 import numpy as np
 import logging
-from robot_arm.transforms import RobotState, ArmPoint, rot_x, rot_y, rot_z, down_arm, up_arm, to_arm
+from robot_arm.transforms import build_rot_x, build_rot_y, build_rot_z
+from robot_arm.state import RobotState, ArmPoint, down_arm, up_arm, to_arm
 from scipy.spatial.transform import Rotation
 
 logger = logging.getLogger(__name__)
@@ -19,12 +20,12 @@ class ArmPoint:
 def get_state():
   return RobotState(
     arm_rots = [
-      rot_x(np.pi / 2),
-      rot_y(np.pi / 2),
-      rot_z(np.pi / 2),
-      rot_z(np.pi / 2),
-      rot_y(np.pi / 2),
-      rot_x(np.pi / 2),
+      build_rot_x(np.pi / 2),
+      build_rot_y(np.pi / 2),
+      build_rot_z(np.pi / 2),
+      build_rot_z(np.pi / 2),
+      build_rot_y(np.pi / 2),
+      build_rot_x(np.pi / 2),
     ],
     arm_trans = [
       np.array([0, 0, 10]) for _ in range(6)
@@ -42,21 +43,21 @@ def test_rot_x():
   for theta in np.arange(start=-20, stop=20, step=.05):
     rot = Rotation.from_rotvec(theta * x_hat)
     logger.info("%s", rot.as_matrix())
-    assert np.all(np.isclose(rot.as_matrix(), rot_x(theta)))
+    assert np.all(np.isclose(rot.as_matrix(), build_rot_x(theta)))
 
 def test_rot_y():
   x_hat = np.array([0, 1, 0])
   for theta in np.arange(start=-20, stop=20, step=.05):
     rot = Rotation.from_rotvec(theta * x_hat)
     logger.info("%s", rot.as_matrix())
-    assert np.all(np.isclose(rot.as_matrix(), rot_y(theta)))
+    assert np.all(np.isclose(rot.as_matrix(), build_rot_y(theta)))
 
 def test_rot_z():
   x_hat = np.array([0, 0, 1])
   for theta in np.arange(start=-20, stop=20, step=.05):
     rot = Rotation.from_rotvec(theta * x_hat)
     logger.info("%s", rot.as_matrix())
-    assert np.all(np.isclose(rot.as_matrix(), rot_z(theta)))
+    assert np.all(np.isclose(rot.as_matrix(), build_rot_z(theta)))
 
 def test_traverse_arm():
   ''' def down_arm(state: RobotState, arm_point: ArmPoint): '''
