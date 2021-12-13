@@ -1,25 +1,111 @@
 import numpy as np
 import logging
+from dataclasses import dataclass
 from robot_arm import transforms
 from robot_arm.transforms import build_rot_x, build_rot_y, build_rot_z
-from robot_arm.state import RobotState, ArmPoint, down_arm, up_arm, to_arm
 from scipy.spatial.transform import Rotation
 
 logger = logging.getLogger(__name__)
 
-'''
-class RobotState:
-  theta: np.ndarray
+
+@dataclass
+class TestRobotState:
   arm_rots: list[np.ndarray]
+  ''' The arm rotations. frozen. index 0 is for the first arm, n=1. '''
+
   arm_trans: list[np.ndarray]
-class ArmPoint:
+  ''' The arm translations. frozen. index 0 is for the first arm, n=1. '''
+
+  thetas: list[float]
+  ''' The each arm's current rotations. index 0 is for the first arm, n=1.  '''
+
+  def __post_init__(self):
+    self.arm_rots = [np.array(arm_rot) for arm_rot in self.arm_rots]
+    self.arm_trans = [np.array(arm_tran) for arm_tran in self.arm_trans]
+    self.thetas = np.array(self.thetas)
+
+    assert len(self.arm_rots) == len(self.arm_trans)
+    assert len(self.arm_rots) == len(self.thetas)
+
+@dataclass
+class TestArmPoint:
   index: int
+  ''' what arm's cartesian space this point exists in. 0 is robot's, 1 is arm 1. '''
+
   point: np.ndarray
-'''
+  ''' the point '''
+
+def down_arm(state: TestRobotState, arm_point: TestArmPoint):
+  ''' move arm_point down the arm '''
+  # the current arm's n
+  n = arm_point.index
+  theta = state.thetas[n]
+  rot = state.arm_rots[n]
+  tran = state.arm_trans[n]
+  point = arm_point.point
+
+  new_point = transforms.build_rot_z(theta)@rot@(point + tran)
+  return TestArmPoint(n+1, new_point)
+
+def up_arm(state: TestRobotState, arm_point: TestArmPoint):
+  ''' move arm_point up the arm. assumes arm_point.index > 0 '''
+  # the previous arm's n
+  n = arm_point.index - 1
+  theta = state.thetas[n]
+  rot = state.arm_rots[n]
+  tran = state.arm_trans[n]
+  point = arm_point.point
+
+  # note: inverse of rotation/unitary matrix is just transpose
+  new_point = rot.T @ transforms.build_rot_z(theta).T @ point - tran
+  return TestArmPoint(n, new_point)
+
+def to_arm(state: TestRobotState, arm_point: TestArmPoint, arm_number: int):
+  ''' arm_number is 0 for robot 1 for first arm. return value will match arm_point.index '''
+  point = arm_point
+  while point.index < arm_number:
+    point = down_arm(state, point)
+  while point.index > arm_number:
+    point = up_arm(state, point)
+  return point
+
+def down_arm(state: TestRobotState, arm_point: TestArmPoint):
+  ''' move arm_point down the arm '''
+  # the current arm's n
+  n = arm_point.index
+  theta = state.thetas[n]
+  rot = state.arm_rots[n]
+  tran = state.arm_trans[n]
+  point = arm_point.point
+
+  new_point = transforms.build_rot_z(theta)@rot@(point + tran)
+  return TestArmPoint(n+1, new_point)
+
+def up_arm(state: TestRobotState, arm_point: TestArmPoint):
+  ''' move arm_point up the arm. assumes arm_point.index > 0 '''
+  # the previous arm's n
+  n = arm_point.index - 1
+  theta = state.thetas[n]
+  rot = state.arm_rots[n]
+  tran = state.arm_trans[n]
+  point = arm_point.point
+
+  # note: inverse of rotation/unitary matrix is just transpose
+  new_point = rot.T @ transforms.build_rot_z(theta).T @ point - tran
+  return TestArmPoint(n, new_point)
+
+def to_arm(state: TestRobotState, arm_point: TestArmPoint, arm_number: int):
+  ''' arm_number is 0 for robot 1 for first arm. return value will match arm_point.index '''
+  point = arm_point
+  while point.index < arm_number:
+    point = down_arm(state, point)
+  while point.index > arm_number:
+    point = up_arm(state, point)
+  return point
 
 
 def get_state():
-  return RobotState(
+  return TestRobotState(
     arm_rots = [
       build_rot_x(np.pi / 2),
       build_rot_y(np.pi / 2),
@@ -61,9 +147,9 @@ def test_rot_z():
     assert np.all(np.isclose(rot.as_matrix(), build_rot_z(theta)))
 
 def test_traverse_arm():
-  ''' def down_arm(state: RobotState, arm_point: ArmPoint): '''
+  ''' def down_arm(state: TestRobotState, arm_point: TestArmPoint): '''
   state = get_state()
-  init_point = ArmPoint(0, np.zeros(3))
+  init_point = TestArmPoint(0, np.zeros(3))
   point = init_point
   for i in range(6):
     last_point = point
@@ -92,7 +178,7 @@ def test_traverse_arm():
 def test_high_traverse_arm():
   state = get_state()
   state.thetas = np.array([1, 2, 3, 4, 5, 6])
-  init_point = ArmPoint(0, np.zeros(3))
+  init_point = TestArmPoint(0, np.zeros(3))
   point = init_point
   for i in range(6):
     point = down_arm(state, point)
